@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>动物配对记忆游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .game-container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .info-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        /* 难度选择样式 */
+        .difficulty-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .difficulty-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .difficulty-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .difficulty-btn {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .difficulty-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .difficulty-btn.active {
+            background: rgba(76, 205, 196, 0.8);
+            border-color: rgba(76, 205, 196, 1);
+        }
+        
+        .game-board {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        /* 不同难度的网格布局 */
+        .game-board.difficulty-1 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        
+        .game-board.difficulty-2 {
+            grid-template-columns: repeat(5, 1fr);
+        }
+        
+        .game-board.difficulty-3 {
+            grid-template-columns: repeat(6, 1fr);
+        }
+        
+        .game-board.difficulty-4 {
+            grid-template-columns: repeat(7, 1fr);
+        }
+        
+        .game-board.difficulty-5 {
+            grid-template-columns: repeat(8, 1fr);
+        }
+        
+        .card {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card.matched {
+            background: rgba(144, 238, 144, 0.8);
+            animation: matchPulse 0.6s ease-in-out;
+        }
+        
+        @keyframes matchPulse {
+            0%, 100% { transform: rotateY(180deg) scale(1); }
+            50% { transform: rotateY(180deg) scale(1.1); }
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+        
+        /* 根据难度调整卡片大小 */
+        .game-board.difficulty-1 .card-face,
+        .game-board.difficulty-2 .card-face {
+            font-size: 36px;
+        }
+        
+        .game-board.difficulty-3 .card-face {
+            font-size: 30px;
+        }
+        
+        .game-board.difficulty-4 .card-face {
+            font-size: 24px;
+        }
+        
+        .game-board.difficulty-5 .card-face {
+            font-size: 20px;
+        }
+        
+        .card-back {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+        }
+        
+        .card-front {
+            background: white;
+            color: #333;
+            transform: rotateY(180deg);
+        }
+        
+        .restart-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .restart-btn:active {
+            transform: translateY(0);
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+        }
+        
+        .game-over h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #ffd93d;
+        }
+        
+        .game-over p {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+        
+        /* 提示弹窗样式 */
+        .alert-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+        }
+        
+        .alert-content {
+            background: white;
+            color: #333;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 80%;
+        }
+        
+        .alert-content h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .alert-content button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .alert-content button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .game-board {
+                gap: 8px;
+            }
+            
+            .game-board.difficulty-1 .card-face,
+            .game-board.difficulty-2 .card-face {
+                font-size: 28px;
+            }
+            
+            .game-board.difficulty-3 .card-face {
+                font-size: 24px;
+            }
+            
+            .game-board.difficulty-4 .card-face {
+                font-size: 20px;
+            }
+            
+            .game-board.difficulty-5 .card-face {
+                font-size: 16px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .game-info {
+                font-size: 14px;
+            }
+            
+            .difficulty-buttons {
+                gap: 5px;
+            }
+            
+            .difficulty-btn {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 游戏打开弹窗 -->
+    <div class="alert-modal" id="welcomeAlert">
+        <div class="alert-content">
+            <h2>六六七七比一比，看看谁用的次数少</h2>
+            <button onclick="closeWelcomeAlert()">开始游戏</button>
+        </div>
+    </div>
+    
+    <!-- 连续玩三次提示弹窗 -->
+    <div class="alert-modal hidden" id="memoryAlert">
+        <div class="alert-content">
+            <h2>六六七七谁的记忆力更好？</h2>
+            <button onclick="closeMemoryAlert()">继续游戏</button>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <h1>🐾 动物配对记忆游戏 🐾</h1>
+        
+        <!-- 难度选择 -->
+        <div class="difficulty-selector">
+            <label>选择难度:</label>
+            <div class="difficulty-buttons">
+                <button class="difficulty-btn active" data-difficulty="1" onclick="changeDifficulty(1)">1级 (4×4)</button>
+                <button class="difficulty-btn" data-difficulty="2" onclick="changeDifficulty(2)">2级 (5×5)</button>
+                <button class="difficulty-btn" data-difficulty="3" onclick="changeDifficulty(3)">3级 (6×6)</button>
+                <button class="difficulty-btn" data-difficulty="4" onclick="changeDifficulty(4)">4级 (7×7)</button>
+                <button class="difficulty-btn" data-difficulty="5" onclick="changeDifficulty(5)">5级 (8×8)</button>
+            </div>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-item">⏱️ 时间: <span id="time">00:00</span></div>
+            <div class="info-item">🎯 步数: <span id="moves">0</span></div>
+            <div class="info-item">✅ 配对: <span id="matches">0</span>/<span id="totalMatches">8</span></div>
+        </div>
+        
+        <div class="game-board difficulty-1" id="gameBoard"></div>
+        
+        <button class="restart-btn" onclick="restartGame()">🔄 重新开始</button>
+    </div>
+    
+    <div class="game-over hidden" id="gameOver">
+        <h2>🎉 恭喜你赢了！ 🎉</h2>
+        <p>用时: <span id="finalTime">00:00</span></p>
+        <p>步数: <span id="finalMoves">0</span></p>
+        <button class="restart-btn" onclick="restartGame()">🎮 再玩一次</button>
+    </div>
+    
+    <script>
+        // 动物表情数组
+        const allAnimals = [
+            '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
+            '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔',
+            '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉',
+            '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋',
+            '🐌', '🐞', '🐜', '🦟', '🦗', '🕷️', '🦂', '🐢',
+            '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞',
+            '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🐊',
+            '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏'
+        ];
+        
+        // 游戏状态变量
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let time = 0;
+        let timerId = null;
+        let isProcessing = false;
+        let currentDifficulty = 1;
+        let totalPairs = 8;
+        let gameCount = 0;
+        
+        // DOM 元素
+        const gameBoard = document.getElementById('gameBoard');
+        const timeElement = document.getElementById('time');
+        const movesElement = document.getElementById('moves');
+        const matchesElement = document.getElementById('matches');
+        const totalMatchesElement = document.getElementById('totalMatches');
+        const gameOverElement = document.getElementById('gameOver');
+        const finalTimeElement = document.getElementById('finalTime');
+        const finalMovesElement = document.getElementById('finalMoves');
+        const welcomeAlert = document.getElementById('welcomeAlert');
+        const memoryAlert = document.getElementById('memoryAlert');
+        
+        // 获取游戏次数
+        function getGameCount() {
+            return parseInt(localStorage.getItem('animalGameCount')) || 0;
+        }
+        
+        // 设置游戏次数
+        function setGameCount(count) {
+            localStorage.setItem('animalGameCount', count);
+        }
+        
+        // 显示欢迎弹窗
+        function closeWelcomeAlert() {
+            welcomeAlert.classList.add('hidden');
+            initGame();
+        }
+        
+        // 显示记忆提示弹窗
+        function showMemoryAlert() {
+            memoryAlert.classList.remove('hidden');
+        }
+        
+        // 关闭记忆提示弹窗
+        function closeMemoryAlert() {
+            memoryAlert.classList.add('hidden');
+        }
+        
+        // 根据难度获取动物数组
+        function getAnimalsForDifficulty(difficulty) {
+            const gridSize = 3 + difficulty;
+            const pairsNeeded = Math.floor((gridSize * gridSize) / 2);
+            
+            // 从所有动物中随机选择需要的数量
+            const selectedAnimals = [...allAnimals]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, pairsNeeded);
+            
+            // 每种动物出现两次
+            return [...selectedAnimals, ...selectedAnimals].sort(() => Math.random() - 0.5);
+        }
+        
+        // 初始化游戏
+        function initGame() {
+            // 获取当前难度的动物数组
+            const animals = getAnimalsForDifficulty(currentDifficulty);
+            
+            // 设置总配对数
+            totalPairs = animals.length / 2;
+            totalMatchesElement.textContent = totalPairs;
+            
+            // 创建卡片
+            gameBoard.innerHTML = '';
+            cards = [];
+            
+            animals.forEach((animal, index) => {
+                const card = createCard(animal, index);
+                gameBoard.appendChild(card);
+                cards.push(card);
+            });
+            
+            // 重置游戏状态
+            matchedPairs = 0;
+            moves = 0;
+            time = 0;
+            flippedCards = [];
+            isProcessing = false;
+            
+            updateUI();
+            startTimer();
+        }
+        
+        // 创建卡片元素
+        function createCard(animal, index) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.animal = animal;
+            card.dataset.index = index;
+            
+            card.innerHTML = `
+                <div class="card-face card-back">?</div>
+                <div class="card-face card-front">${animal}</div>
+            `;
+            
+            card.addEventListener('click', () => flipCard(card));
+            
+            return card;
+        }
+        
+        // 翻转卡片
+        function flipCard(card) {
+            if (isProcessing || card.classList.contains('flipped') || card.classList.contains('matched')) {
+                return;
+            }
+            
+            card.classList.add('flipped');
+            flippedCards.push(card);
+            
+            if (flippedCards.length === 2) {
+                moves++;
+                updateUI();
+                checkMatch();
+            }
+        }
+        
+        // 检查配对
+        function checkMatch() {
+            isProcessing = true;
+            
+            const [card1, card2] = flippedCards;
+            
+            if (card1.dataset.animal === card2.dataset.animal) {
+                // 配对成功
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                updateUI();
+                flippedCards = [];
+                
+                // 检查游戏是否结束
+                if (matchedPairs === totalPairs) {
+                    endGame();
+                }
+                
+                isProcessing = false;
+            } else {
+                // 配对失败，翻转回来
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                    isProcessing = false;
+                }, 1000);
+            }
+        }
+        
+        // 更新UI
+        function updateUI() {
+            timeElement.textContent = formatTime(time);
+            movesElement.textContent = moves;
+            matchesElement.textContent = matchedPairs;
+        }
+        
+        // 格式化时间
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // 开始计时器
+        function startTimer() {
+            if (timerId) {
+                clearInterval(timerId);
+            }
+            
+            timerId = setInterval(() => {
+                time++;
+                updateUI();
+            }, 1000);
+        }
+        
+        // 结束游戏
+        function endGame() {
+            clearInterval(timerId);
+            
+            finalTimeElement.textContent = formatTime(time);
+            finalMovesElement.textContent = moves;
+            
+            gameOverElement.classList.remove('hidden');
+            
+            // 增加游戏次数
+            gameCount = getGameCount() + 1;
+            setGameCount(gameCount);
+            
+            // 每3次游戏显示提示
+            if (gameCount % 3 === 0) {
+                setTimeout(showMemoryAlert, 1000);
+            }
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            gameOverElement.classList.add('hidden');
+            initGame();
+        }
+        
+        // 改变难度
+        function changeDifficulty(difficulty) {
+            currentDifficulty = difficulty;
+            
+            // 更新难度按钮状态
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('active');
+            
+            // 更新游戏板类名
+            gameBoard.className = `game-board difficulty-${difficulty}`;
+            
+            // 重新初始化游戏
+            initGame();
+        }
+        
+        // 初始化游戏次数
+        gameCount = getGameCount();
+    </script>
+</body>
+</html>
