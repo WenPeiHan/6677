@@ -1,6 +1,6 @@
 # 6677
 
-Games for my lovely kids.
+Games for my lovely kids, Dylan and Iris.
 
 ## Animals
 Pairing game to find out two same animals.
