@@ -24,20 +24,34 @@
             width: 100vw;
             height: 100vh;
             position: relative;
-            overflow: hidden;
+            overflow: auto;
+        }
+        
+        /* 针对横屏模式的特殊处理 */
+        @media screen and (orientation: landscape) {
+            .game-container {
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            
+            /* 增加游戏容器的最小高度，确保气球有足够空间 */
+            #balloons-container {
+                min-height: 100vh;
+                position: relative;
+            }
         }
         
         /* 森林背景 */
         .forest-background {
             width: 100%;
             height: 100%;
-            background-image: url('forest.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
+            z-index: -1;
         }
         
         /* 游戏信息面板 */
