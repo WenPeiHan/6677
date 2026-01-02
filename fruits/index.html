@@ -887,6 +887,22 @@
             updateGameStatus();
         }
         
+
+        
+        // 初始化AudioContext - 用于处理音效（针对iOS设备的关键）
+        let audioContext = null;
+        
+        // 激活AudioContext - 处理浏览器自动播放政策（针对iOS设备的关键）
+        function activateAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // 恢复AudioContext（如果被挂起）
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+        
         // 结束游戏
         function endGame() {
             const modal = document.getElementById('result-modal');
@@ -911,25 +927,15 @@
             text.textContent = `小猴子1号: ${gameState.player1Score} 金币 | 小猴子2号: ${gameState.player2Score} 金币`;
             modal.classList.remove('hide');
             
-            // 播放胜利音乐 - 完全参照Fighters游戏的实现
+            // 直接使用victory.mp3播放胜利音乐
             try {
                 // 确保AudioContext已激活（针对iOS设备）
                 activateAudioContext();
                 
-                // 创建并播放音频
                 const victoryMusic = new Audio('victory.mp3');
-                victoryMusic.play().catch(error => {
-                    console.log('胜利音乐播放失败:', error);
-                    
-                    // 针对iOS设备的备选方案：直接设置src并播放
-                    victoryMusic.src = 'victory.mp3';
-                    victoryMusic.load();
-                    victoryMusic.play().catch(backupError => {
-                        console.log('备选方案：胜利音乐播放失败:', backupError);
-                    });
-                });
+                victoryMusic.play();
             } catch (error) {
-                console.log('无法播放胜利音乐:', error);
+                console.log('胜利音乐播放失败:', error);
             }
         }
         
@@ -1317,6 +1323,11 @@
         const randomBackground = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
         const forestBackground = document.querySelector('.forest-background');
         forestBackground.style.backgroundImage = `url('${randomBackground}')`;
+        
+        // 针对iOS设备的关键：添加全局事件监听器来激活AudioContext
+        // iOS设备需要用户交互才能激活AudioContext
+        document.addEventListener('click', activateAudioContext, { once: true });
+        document.addEventListener('touchstart', activateAudioContext, { once: true });
         
         // 初始化游戏，显示头像选择
         showAvatarSelection();
