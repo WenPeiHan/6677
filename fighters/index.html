@@ -1225,10 +1225,8 @@
         <div class="game-board" id="game-board"></div>
         
         <!-- 音频元素 -->
-        <audio id="victory-music" preload="auto">
-            <source src="victory.mp3" type="audio/mpeg">
-            <!-- 支持多种音频格式以提高浏览器兼容性 -->
-        </audio>
+        <audio id="victory-music" preload="auto" src="victory.mp3" type="audio/mpeg">
+       </audio>
         
         <!-- 手机横屏提示 -->
         <div id="orientation-hint" class="orientation-hint">
@@ -1832,12 +1830,16 @@
             activateAudioContext();
             // 使用页面中已创建的音频元素，确保与用户交互关联
             const victoryMusic = document.getElementById('victory-music');
-            // 重置音频并播放
+            
+            // 确保音频元素的src属性正确设置
+            victoryMusic.src = 'victory.mp3';
+            victoryMusic.type = 'audio/mpeg';
+            
+            // 重置音频并播放，严格只播放victory.mp3，无任何后备方案
             victoryMusic.currentTime = 0;
             victoryMusic.play().catch(error => {
-                console.log('胜利音乐播放失败:', error);
-                // 尝试使用generateApplauseSound作为后备方案
-                generateApplauseSound();
+                console.error('胜利音乐播放失败:', error);
+                // 严格按照要求，只播放victory.mp3，不使用任何后备方案
             });
         }
         
