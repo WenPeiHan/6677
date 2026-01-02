@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小猴子找水果</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            color: white;
+            min-height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        /* 游戏容器 */
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 森林背景 */
+        .forest-background {
+            width: 100%;
+            height: 100%;
+            background-image: url('forest.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        /* 游戏信息面板 */
+        .game-info {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 30px;
+            border-radius: 25px;
+            text-align: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        /* 玩家信息 */
+        .player-info {
+            display: flex;
+            justify-content: space-around;
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            padding: 0 20px;
+            z-index: 100;
+        }
+        
+        .player {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-align: center;
+            min-width: 150px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .player-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 5px;
+            background-size: cover;
+            background-position: center;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .player-name {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .player-score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        /* 游戏状态 */
+        .game-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px 40px;
+            border-radius: 30px;
+            text-align: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .round-info {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            font-size: 1rem;
+        }
+        
+        /* 难度选择 */
+        .difficulty-selector {
+            position: absolute;
+            top: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .difficulty-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .difficulty-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .difficulty-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .difficulty-btn.active {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            border-color: #ffd700;
+        }
+        
+        /* 标志样式 */
+        .flag {
+            position: absolute;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 50;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .balloon {
+            position: absolute;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 50;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+        }
+        
+        .flag:hover,
+        .balloon:hover {
+            transform: scale(1.2) translateY(-5px);
+            animation: none;
+        }
+        
+        /* 颜色类 */
+        .red {
+            color: #ff4757;
+        }
+        
+        .blue {
+            color: #3742fa;
+        }
+        
+        .purple {
+            color: #a55eea;
+        }
+        
+        /* 水果样式 */
+        .fruit {
+            position: absolute;
+            font-size: 3rem;
+            z-index: 60;
+            animation: fruitAppear 0.5s ease-in-out;
+        }
+        
+        @keyframes fruitAppear {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(360deg);
+                opacity: 1;
+            }
+        }
+        
+        /* 水果价值显示 */
+        .fruit-value {
+            position: absolute;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 70;
+            animation: valueFloat 1s ease-out forwards;
+        }
+        
+        @keyframes valueFloat {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #2d5016, #639a67);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.5s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .modal-text {
+            font-size: 1.2rem;
+            margin: 15px 0;
+        }
+        
+        .winner-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 20px auto;
+            background-size: cover;
+            background-position: center;
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+        }
+        
+        .continue-btn {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .continue-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+        
+        /* 头像选择样式 */
+        .avatar-selection {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .avatar-option {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .avatar-option:hover {
+            border-color: #ffd700;
+            transform: scale(1.1);
+        }
+        
+        .avatar-option.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            transform: scale(1.1);
+        }
+        
+        .hide {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 森林背景 -->
+        <div class="forest-background"></div>
+        
+        <!-- 玩家信息 -->
+        <div class="player-info">
+            <div class="player player1">
+                <div class="player-avatar" id="player1-avatar"></div>
+                <div class="player-name">小猴子1号</div>
+                <div class="player-score" id="player1-score">0</div>
+                <div>金币</div>
+            </div>
+            <div class="player player2">
+                <div class="player-avatar" id="player2-avatar"></div>
+                <div class="player-name">小猴子2号</div>
+                <div class="player-score" id="player2-score">0</div>
+                <div>金币</div>
+            </div>
+        </div>
+        
+        <!-- 游戏信息 -->
+        <div class="game-info">
+            <h1>🌲 小猴子找水果 🌲</h1>
+        </div>
+        
+        <!-- 轮次信息 -->
+        <div class="round-info">
+            轮次: <span id="round-count">1</span>/10
+        </div>
+        
+        <!-- 难度选择 -->
+        <div class="difficulty-selector">
+            <div class="difficulty-buttons">
+                <button class="difficulty-btn active" data-fruits="6">6个</button>
+                <button class="difficulty-btn" data-fruits="7">7个</button>
+                <button class="difficulty-btn" data-fruits="8">8个</button>
+                <button class="difficulty-btn" data-fruits="9">9个</button>
+                <button class="difficulty-btn" data-fruits="10">10个</button>
+            </div>
+        </div>
+        
+        <!-- 游戏状态 -->
+        <div class="game-status" id="game-status">小猴子1号，轮到你找水果啦！</div>
+        
+        <!-- 气球容器 -->
+        <div id="balloons-container"></div>
+    </div>
+    
+    <!-- 头像选择模态框 -->
+    <div class="modal" id="avatar-modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="avatar-modal-title">选择你的猴子头像</h2>
+            <p class="modal-text" id="avatar-modal-text">小猴子1号，请选择你的头像：</p>
+            <div class="avatar-selection">
+                <div class="avatar-option" data-avatar="monkey1.jpg" style="background-image: url('monkey1.jpg');"></div>
+                <div class="avatar-option" data-avatar="monkey2.jpg" style="background-image: url('monkey2.jpg');"></div>
+                <div class="avatar-option" data-avatar="monkey3.jpg" style="background-image: url('monkey3.jpg');"></div>
+                <div class="avatar-option" data-avatar="monkey4.jpg" style="background-image: url('monkey4.jpg');"></div>
+            </div>
+            <button class="continue-btn" id="avatar-confirm-btn" disabled>确认选择</button>
+        </div>
+    </div>
+    
+    <!-- 音频元素 -->
+    <audio id="victory-music" preload="auto">
+        <source src="https://www.soundjay.com/misc/sounds/victory-fanfare-1.mp3" type="audio/mpeg">
+        <source src="https://www.soundjay.com/misc/sounds/victory-fanfare-2.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- 结果模态框 -->
+    <div class="modal hide" id="result-modal">
+        <div class="modal-content">
+            <div id="winner-avatar" class="winner-avatar"></div>
+            <h2 class="modal-title" id="result-title">游戏结束</h2>
+            <p class="modal-text" id="result-text"></p>
+            <button class="continue-btn" id="play-again">再来一局</button>
+        </div>
+    </div>
+    
+    <script>
+        // 游戏数据
+        const fruits = [
+            { emoji: '🍎', value: 1000, name: '苹果', level: 1 },
+            { emoji: '🍊', value: 2000, name: '橙子', level: 2 },
+            { emoji: '🍌', value: 3000, name: '香蕉', level: 3 },
+            { emoji: '🍇', value: 4000, name: '葡萄', level: 4 },
+            { emoji: '🍓', value: 5000, name: '草莓', level: 5 },
+            { emoji: '🍉', value: 6000, name: '西瓜', level: 6 },
+            { emoji: '🍍', value: 7000, name: '菠萝', level: 7 },
+            { emoji: '🥭', value: 8000, name: '芒果', level: 8 },
+            { emoji: '🥥', value: 9000, name: '椰子', level: 9 },
+            { emoji: '🥝', value: 10000, name: '猕猴桃', level: 10 }
+        ];
+        
+        // 不同颜色的标志emoji
+        const coloredBalloons = ['🎈', '🎈', '🎈']; // 气球emoji（默认彩色，但我们会使用不同类型的气球）
+        const coloredFlags = ['🚩', '🏁', '🎌']; // 不同类型的旗子emoji
+        const multiColorBalloons = ['🔴', '🔵', '🟣']; // 彩色圆形emoji代替气球
+        const colors = ['red', 'blue', 'purple'];
+        
+        // 游戏状态
+        let gameState = {
+            balloons: [],
+            player1Score: 0,
+            player2Score: 0,
+            currentPlayer: 1,
+            round: 1,
+            maxRounds: 10,
+            selectedFruits: 0,
+            maxSelectedFruitsPerRound: 2,
+            balloonsPerRound: 6, // 默认每轮标志数量
+            player1Avatar: '',
+            player2Avatar: '',
+            currentAvatarSelector: 1 // 当前正在选择头像的玩家
+        };
+        
+        // 头像选择状态
+        let selectedAvatar = '';
+        
+        // 获取游戏容器尺寸
+        function getContainerSize() {
+            const container = document.querySelector('.game-container');
+            return {
+                width: container.clientWidth,
+                height: container.clientHeight
+            };
+        }
+        
+        // 生成随机位置
+        function getRandomPosition() {
+            const size = getContainerSize();
+            const margin = 50;
+            return {
+                x: Math.random() * (size.width - margin * 2) + margin,
+                y: Math.random() * (size.height - margin * 2) + margin
+            };
+        }
+        
+        // 初始化气球
+        function initBalloons() {
+            const balloons = [];
+            
+            // 根据选择的难度创建对应数量的气球
+            for (let i = 0; i < gameState.balloonsPerRound; i++) {
+                // 随机选择一个水果
+                const fruitIndex = Math.floor(Math.random() * fruits.length);
+                const fruit = fruits[fruitIndex];
+                
+                // 随机位置
+                const position = getRandomPosition();
+                
+                balloons.push({
+                    id: i,
+                    fruit: fruit,
+                    position: position,
+                    clicked: false
+                });
+            }
+            
+            return balloons;
+        }
+        
+        // 渲染气球
+        function renderBalloons() {
+            const container = document.getElementById('balloons-container');
+            container.innerHTML = '';
+            
+            // 不同颜色的气球
+            const coloredBalloons = ['🔴', '🔵', '🟣']; // 红色、蓝色、紫色圆形代表气球
+            
+            gameState.balloons.forEach((balloon, index) => {
+                const balloonElement = document.createElement('div');
+                
+                // 随机选择颜色索引
+                let colorIndex;
+                if (index < 3) {
+                    // 前三个气球固定使用不同颜色
+                    colorIndex = index;
+                } else {
+                    // 剩余气球随机选择颜色
+                    colorIndex = Math.floor(Math.random() * 3);
+                }
+                
+                // 设置气球样式
+                balloonElement.className = 'balloon';
+                balloonElement.textContent = coloredBalloons[colorIndex];
+                
+                balloonElement.style.fontSize = '2rem';
+                balloonElement.style.position = 'absolute';
+                balloonElement.style.left = `${balloon.position.x}px`;
+                balloonElement.style.top = `${balloon.position.y}px`;
+                balloonElement.style.cursor = 'pointer';
+                balloonElement.style.transition = 'all 0.3s ease';
+                balloonElement.style.zIndex = '50';
+                balloonElement.style.animation = 'float 3s ease-in-out infinite';
+                balloonElement.dataset.balloonId = balloon.id;
+                
+                // 添加点击事件
+                balloonElement.addEventListener('click', () => handleBalloonClick(balloon.id));
+                
+                container.appendChild(balloonElement);
+            });
+        }
+        
+        // 处理气球点击
+        function handleBalloonClick(balloonId) {
+            const balloon = gameState.balloons.find(b => b.id === balloonId);
+            if (!balloon || balloon.clicked) return;
+            
+            // 标记为已点击
+            balloon.clicked = true;
+            
+            // 移除气球
+            const balloonElement = document.querySelector(`[data-balloon-id="${balloonId}"]`);
+            if (balloonElement) {
+                balloonElement.remove();
+            }
+            
+            // 显示水果
+            showFruit(balloon);
+            
+            // 更新玩家分数
+            if (gameState.currentPlayer === 1) {
+                gameState.player1Score += balloon.fruit.value;
+            } else {
+                gameState.player2Score += balloon.fruit.value;
+            }
+            
+            // 更新分数显示
+            updateScore();
+            
+            // 增加选中水果计数
+            gameState.selectedFruits++;
+            
+            // 检查是否完成本轮
+            if (gameState.selectedFruits >= gameState.maxSelectedFruitsPerRound) {
+                // 延迟后进入下一轮
+                setTimeout(() => {
+                    nextRound();
+                }, 1500);
+            } else {
+                // 切换玩家
+                gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+                updateGameStatus();
+            }
+        }
+        
+        // 显示水果
+        function showFruit(balloon) {
+            const container = document.getElementById('balloons-container');
+            
+            // 创建水果元素
+            const fruitElement = document.createElement('div');
+            fruitElement.className = 'fruit';
+            fruitElement.textContent = balloon.fruit.emoji;
+            fruitElement.style.left = `${balloon.position.x}px`;
+            fruitElement.style.top = `${balloon.position.y}px`;
+            
+            // 创建价值显示
+            const valueElement = document.createElement('div');
+            valueElement.className = 'fruit-value';
+            valueElement.textContent = `+${balloon.fruit.value}金币`;
+            valueElement.style.left = `${balloon.position.x + 20}px`;
+            valueElement.style.top = `${balloon.position.y - 20}px`;
+            
+            container.appendChild(fruitElement);
+            container.appendChild(valueElement);
+            
+            // 3秒后移除水果和价值
+            setTimeout(() => {
+                if (fruitElement.parentNode) {
+                    fruitElement.remove();
+                }
+                if (valueElement.parentNode) {
+                    valueElement.remove();
+                }
+            }, 2000);
+        }
+        
+        // 更新分数显示
+        function updateScore() {
+            document.getElementById('player1-score').textContent = gameState.player1Score;
+            document.getElementById('player2-score').textContent = gameState.player2Score;
+        }
+        
+        // 更新游戏状态文本
+        function updateGameStatus() {
+            const status = document.getElementById('game-status');
+            const playerName = gameState.currentPlayer === 1 ? '小猴子1号' : '小猴子2号';
+            status.textContent = `(${gameState.round}/${gameState.maxRounds}) ${playerName}，轮到你找水果啦！`;
+        }
+        
+        // 进入下一轮
+        function nextRound() {
+            // 清除所有标志和水果
+            document.getElementById('balloons-container').innerHTML = '';
+            
+            // 重置选中水果计数
+            gameState.selectedFruits = 0;
+            
+            // 更新轮次
+            gameState.round++;
+            
+            // 检查游戏是否结束
+            if (gameState.round > gameState.maxRounds) {
+                endGame();
+                return;
+            }
+            
+            // 重新生成标志
+            gameState.balloons = initBalloons();
+            
+            // 渲染新标志
+            renderBalloons();
+            
+            // 更新界面
+            updateGameStatus();
+            document.getElementById('round-count').textContent = gameState.round;
+        }
+        
+        // 结束游戏
+        function endGame() {
+            const modal = document.getElementById('result-modal');
+            const title = document.getElementById('result-title');
+            const text = document.getElementById('result-text');
+            const winnerAvatar = document.getElementById('winner-avatar');
+            
+            let winner = '';
+            if (gameState.player1Score > gameState.player2Score) {
+                winner = '小猴子1号';
+                title.textContent = `🎉 ${winner}获胜！`;
+                winnerAvatar.style.backgroundImage = `url('${gameState.player1Avatar}')`;
+            } else if (gameState.player1Score < gameState.player2Score) {
+                winner = '小猴子2号';
+                title.textContent = `🎉 ${winner}获胜！`;
+                winnerAvatar.style.backgroundImage = `url('${gameState.player2Avatar}')`;
+            } else {
+                title.textContent = '🤝 平局！';
+                winnerAvatar.style.backgroundImage = `url('${gameState.player1Avatar}')`;
+            }
+            
+            text.textContent = `小猴子1号: ${gameState.player1Score} 金币 | 小猴子2号: ${gameState.player2Score} 金币`;
+            modal.classList.remove('hide');
+            
+            // 播放胜利音乐 - 使用Web Audio API确保兼容性
+            try {
+                activateAudioContext();
+                
+                // 创建一个简单的胜利音效
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // 设置音效参数
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4
+                oscillator.frequency.setValueAtTime(523, audioContext.currentTime + 0.2); // C5
+                oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.4); // E5
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime + 0.6); // A5
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.2);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 1.2);
+            } catch (error) {
+                console.log('无法播放胜利音乐:', error);
+            }
+        }
+        
+        // 更新玩家头像显示
+        function updatePlayerAvatars() {
+            document.getElementById('player1-avatar').style.backgroundImage = `url('${gameState.player1Avatar}')`;
+            document.getElementById('player2-avatar').style.backgroundImage = `url('${gameState.player2Avatar}')`;
+        }
+        
+        // 开始游戏
+        function startGame() {
+            // 初始化游戏板
+            gameState.balloons = initBalloons();
+            
+            // 更新界面
+            updateScore();
+            updateGameStatus();
+            document.getElementById('round-count').textContent = gameState.round;
+            
+            // 渲染气球
+            renderBalloons();
+            
+            // 更新玩家头像
+            updatePlayerAvatars();
+        }
+        
+        // 新游戏
+        function newGame() {
+            // 重置游戏状态
+            gameState = {
+                balloons: [],
+                player1Score: 0,
+                player2Score: 0,
+                currentPlayer: 1,
+                round: 1,
+                maxRounds: 10,
+                selectedFruits: 0,
+                maxSelectedFruitsPerRound: 2,
+                balloonsPerRound: parseInt(document.querySelector('.difficulty-btn.active').dataset.fruits),
+                player1Avatar: '',
+                player2Avatar: '',
+                currentAvatarSelector: 1
+            };
+            
+            // 重置界面
+            document.getElementById('result-modal').classList.add('hide');
+            
+            // 显示头像选择模态框
+            showAvatarSelection();
+        }
+        
+        // 显示头像选择
+        function showAvatarSelection() {
+            const modal = document.getElementById('avatar-modal');
+            const text = document.getElementById('avatar-modal-text');
+            const confirmBtn = document.getElementById('avatar-confirm-btn');
+            
+            // 更新模态框文本
+            text.textContent = gameState.currentAvatarSelector === 1 ? '小猴子1号，请选择你的头像：' : '小猴子2号，请选择你的头像：';
+            
+            // 重置选择
+            selectedAvatar = '';
+            confirmBtn.disabled = true;
+            
+            // 移除所有选中状态
+            document.querySelectorAll('.avatar-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 显示模态框
+            modal.classList.remove('hide');
+        }
+        
+        // 处理头像选择
+        function handleAvatarSelect(avatar) {
+            selectedAvatar = avatar;
+            
+            // 更新选中状态
+            document.querySelectorAll('.avatar-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.dataset.avatar === avatar) {
+                    option.classList.add('selected');
+                }
+            });
+            
+            // 启用确认按钮
+            document.getElementById('avatar-confirm-btn').disabled = false;
+        }
+        
+        // 确认头像选择
+        function confirmAvatarSelection() {
+            if (!selectedAvatar) return;
+            
+            // 保存选择的头像
+            if (gameState.currentAvatarSelector === 1) {
+                gameState.player1Avatar = selectedAvatar;
+                gameState.currentAvatarSelector = 2;
+                showAvatarSelection();
+            } else {
+                gameState.player2Avatar = selectedAvatar;
+                
+                // 隐藏头像选择模态框
+                document.getElementById('avatar-modal').classList.add('hide');
+                
+                // 开始游戏
+                startGame();
+            }
+        }
+        
+        // 处理难度选择
+        function handleDifficultyChange() {
+            // 移除所有按钮的active类
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 为当前点击的按钮添加active类
+            this.classList.add('active');
+            
+            // 更新每轮气球数量
+            gameState.balloonsPerRound = parseInt(this.dataset.fruits);
+            
+            // 重新开始游戏
+            newGame();
+        }
+        
+        // 窗口大小变化时重新渲染气球位置
+        window.addEventListener('resize', () => {
+            // 重新生成位置
+            gameState.balloons.forEach(balloon => {
+                balloon.position = getRandomPosition();
+            });
+            renderBalloons();
+        });
+        
+        // 初始化AudioContext - 用于处理音效
+        let audioContext = null;
+        
+        // 激活AudioContext - 处理浏览器自动播放政策
+        function activateAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // 恢复AudioContext（如果被挂起）
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+        
+        // 事件监听
+        document.getElementById('play-again').addEventListener('click', () => {
+            activateAudioContext();
+            newGame();
+        });
+        
+        document.getElementById('avatar-confirm-btn').addEventListener('click', () => {
+            activateAudioContext();
+            confirmAvatarSelection();
+        });
+        
+        // 添加难度选择按钮事件监听
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                activateAudioContext();
+                handleDifficultyChange.call(btn);
+            });
+        });
+        
+        // 添加头像选择事件监听
+        document.querySelectorAll('.avatar-option').forEach(option => {
+            option.addEventListener('click', () => {
+                activateAudioContext();
+                handleAvatarSelect(option.dataset.avatar);
+            });
+        });
+        
+        // 添加全局点击事件，确保AudioContext被激活
+        document.addEventListener('click', activateAudioContext, { once: true });
+        document.addEventListener('keydown', activateAudioContext, { once: true });
+        
+        // 初始化游戏，显示头像选择
+        showAvatarSelection();
+    </script>
+</body>
+</html>
