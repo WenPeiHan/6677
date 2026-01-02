@@ -24,34 +24,20 @@
             width: 100vw;
             height: 100vh;
             position: relative;
-            overflow: auto;
-        }
-        
-        /* 针对横屏模式的特殊处理 */
-        @media screen and (orientation: landscape) {
-            .game-container {
-                overflow-y: auto;
-                overflow-x: hidden;
-            }
-            
-            /* 增加游戏容器的最小高度，确保气球有足够空间 */
-            #balloons-container {
-                min-height: 100vh;
-                position: relative;
-            }
+            overflow: hidden;
         }
         
         /* 森林背景 */
         .forest-background {
             width: 100%;
             height: 100%;
+            background-image: url('forest.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
-            z-index: -1;
         }
         
         /* 游戏信息面板 */
@@ -667,16 +653,16 @@
         function getRandomPosition() {
             const size = getContainerSize();
             // 增加margin值，确保气球（包括悬停放大效果）完全在屏幕内
-            // 2rem字体大小约32px，悬停放大1.2倍后约38.4px
-            // 增加安全边距，总共使用80px的margin
             const margin = 80;
             // 顶部保留300px空间给文字区域，确保气球不会被遮挡
             const topMargin = 300;
+            // 底部保留100px空间，确保气球不会超出屏幕下方边缘
+            const bottomMargin = 100;
             
             // 确保生成的位置在容器范围内，考虑所有边距
             return {
                 x: Math.random() * (size.width - margin * 2) + margin,
-                y: Math.random() * (size.height - topMargin - margin) + topMargin
+                y: Math.random() * (size.height - topMargin - bottomMargin - margin) + topMargin
             };
         }
         
@@ -904,6 +890,20 @@
 
         
 
+        
+        // 初始化AudioContext - 用于处理音效
+        let audioContext = null;
+        
+        // 激活AudioContext - 处理浏览器自动播放政策
+        function activateAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // 恢复AudioContext（如果被挂起）
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
         
         // 结束游戏
         function endGame() {
@@ -1238,7 +1238,6 @@
         
         // 事件监听
         document.getElementById('view-records').addEventListener('click', () => {
-            activateAudioContext();
             showRecords();
         });
         
@@ -1266,7 +1265,6 @@
         // 添加难度选择按钮事件监听
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                activateAudioContext();
                 handleDifficultyChange.call(btn);
             });
         });
