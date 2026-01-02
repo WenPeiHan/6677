@@ -1,5 +1,8 @@
 @Trae/Solo
 
+index.html: personalized for 66 and 77.
+share.html: for all users.
+
 # 20260102
 1. 主界面集成难度选择 ：
    
