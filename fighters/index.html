@@ -1432,46 +1432,57 @@
             // 播放胜利音乐 - 增强版，支持GitHub Pages
             playVictorySound();
             
-            // 播放胜利音乐函数
+            // 播放胜利音乐函数 - 优化版带详细调试
             function playVictorySound() {
+                console.log('开始播放胜利音乐...');
+                
+                // 确保AudioContext已初始化
+                if (!audioContext) {
+                    console.log('创建新的AudioContext');
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                activateAudioContext();
+                console.log('AudioContext状态:', audioContext.state);
+                
+                // 检查audio元素是否存在
+                const victoryMusic = document.getElementById('victory-music');
+                console.log('音频元素:', victoryMusic);
+                
+                // 直接使用Web Audio API，更可靠
                 try {
-                    activateAudioContext();
+                    // 创建XHR请求加载本地音频文件
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'victory.mp3', true);
+                    xhr.responseType = 'arraybuffer';
                     
-                    // 首先尝试HTML5 Audio
-                    const victoryMusic = document.getElementById('victory-music');
-                    victoryMusic.currentTime = 0;
-                    victoryMusic.play().catch(htmlError => {
-                        console.log('HTML5 Audio播放失败，尝试Web Audio API:', htmlError);
-                        
-                        // 尝试Web Audio API作为备用
-                        try {
-                            // 创建XHR请求加载本地音频文件
-                            const xhr = new XMLHttpRequest();
-                            xhr.open('GET', 'victory.mp3', true);
-                            xhr.responseType = 'arraybuffer';
-                            
-                            xhr.onload = function() {
-                                audioContext.decodeAudioData(xhr.response, function(buffer) {
-                                    const source = audioContext.createBufferSource();
-                                    source.buffer = buffer;
-                                    source.connect(audioContext.destination);
-                                    source.start(0);
-                                }, function(webError) {
-                                    console.log('Web Audio API解码失败:', webError);
-                                });
-                            };
-                            
-                            xhr.onerror = function(networkError) {
-                                console.log('无法加载音频文件:', networkError);
-                            };
-                            
-                            xhr.send();
-                        } catch (webAudioError) {
-                            console.log('Web Audio API初始化失败:', webAudioError);
+                    xhr.onload = function() {
+                        console.log('音频文件加载成功，开始解码...');
+                        audioContext.decodeAudioData(xhr.response, function(buffer) {
+                            console.log('音频解码成功，准备播放...');
+                            const source = audioContext.createBufferSource();
+                            source.buffer = buffer;
+                            source.connect(audioContext.destination);
+                            source.start(0);
+                            console.log('胜利音乐播放成功！');
+                        }, function(webError) {
+                            console.error('Web Audio API解码失败:', webError);
+                        });
+                    };
+                    
+                    xhr.onerror = function(networkError) {
+                        console.error('无法加载音频文件，检查文件路径和存在性:', networkError);
+                    };
+                    
+                    xhr.onprogress = function(event) {
+                        if (event.lengthComputable) {
+                            console.log(`音频文件加载进度: ${Math.round(event.loaded / event.total * 100)}%`);
                         }
-                    });
-                } catch (error) {
-                    console.log('播放胜利音乐时发生错误:', error);
+                    };
+                    
+                    xhr.send();
+                } catch (webAudioError) {
+                    console.error('Web Audio API初始化失败:', webAudioError);
                 }
             }
         }
