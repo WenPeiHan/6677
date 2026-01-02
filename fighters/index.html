@@ -1830,9 +1830,14 @@
             
             // 播放胜利音乐
             activateAudioContext();
-            const victoryMusic = new Audio('victory.mp3');
+            // 使用页面中已创建的音频元素，确保与用户交互关联
+            const victoryMusic = document.getElementById('victory-music');
+            // 重置音频并播放
+            victoryMusic.currentTime = 0;
             victoryMusic.play().catch(error => {
                 console.log('胜利音乐播放失败:', error);
+                // 尝试使用generateApplauseSound作为后备方案
+                generateApplauseSound();
             });
         }
         
@@ -2219,9 +2224,14 @@
             });
         });
         
-        // 添加全局点击事件，确保AudioContext在用户首次交互时被激活
-        document.addEventListener('click', activateAudioContext, { once: true });
-        document.addEventListener('keydown', activateAudioContext, { once: true });
+        // 添加全局交互事件，确保AudioContext在任何用户交互时都能被激活
+        // 移除once选项，确保每次交互都能尝试激活AudioContext
+        document.addEventListener('click', activateAudioContext);
+        document.addEventListener('keydown', activateAudioContext);
+        document.addEventListener('touchstart', activateAudioContext);
+        document.addEventListener('touchend', activateAudioContext);
+        document.addEventListener('mousedown', activateAudioContext);
+        document.addEventListener('mouseup', activateAudioContext);
         
         // 检测设备类型并自动调整屏幕方向
         function detectDeviceAndAdjustOrientation() {
