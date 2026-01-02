@@ -1225,7 +1225,7 @@
         <div class="game-board" id="game-board"></div>
         
         <!-- 音频元素 -->
-        <audio id="victory-music" preload="auto" src="victory.mp3" type="audio/mpeg">
+        <audio id="victory-music" preload="auto" src="victory.mp3" type="audio/mpeg" crossorigin="anonymous">
        </audio>
         
         <!-- 手机横屏提示 -->
@@ -1826,20 +1826,33 @@
             text.textContent = `66小朋友: ${gameState.player1Score} 胜 | 77小朋友: ${gameState.player2Score} 胜 | 总轮次: ${gameState.roundCount}`;
             modal.classList.remove('hide');
             
-            // 播放胜利音乐
-            activateAudioContext();
-            // 使用页面中已创建的音频元素，确保与用户交互关联
+            // 播放胜利音乐 - 优化版
             const victoryMusic = document.getElementById('victory-music');
             
             // 确保音频元素的src属性正确设置
             victoryMusic.src = 'victory.mp3';
             victoryMusic.type = 'audio/mpeg';
+            victoryMusic.crossOrigin = 'anonymous';
             
-            // 重置音频并播放，严格只播放victory.mp3，无任何后备方案
+            // 确保AudioContext完全激活
+            activateAudioContext();
+            
+            // 监听音频加载完成事件，确保音频已准备好播放
+            victoryMusic.addEventListener('canplaythrough', function playMusic() {
+                // 移除事件监听器，避免重复调用
+                victoryMusic.removeEventListener('canplaythrough', playMusic);
+                
+                // 重置音频并播放
+                victoryMusic.currentTime = 0;
+                victoryMusic.play().catch(error => {
+                    console.error('胜利音乐播放失败:', error);
+                });
+            }, { once: true });
+            
+            // 立即尝试播放，即使音频可能还在加载中
             victoryMusic.currentTime = 0;
             victoryMusic.play().catch(error => {
-                console.error('胜利音乐播放失败:', error);
-                // 严格按照要求，只播放victory.mp3，不使用任何后备方案
+                console.error('初始播放尝试失败，等待音频加载完成后重试:', error);
             });
         }
         
@@ -1903,13 +1916,34 @@
         
         // 激活AudioContext - 处理浏览器自动播放政策
         function activateAudioContext() {
+            console.log('尝试激活AudioContext...');
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('AudioContext创建成功，状态:', audioContext.state);
             }
             // 恢复AudioContext（如果被挂起）
             if (audioContext.state === 'suspended') {
-                audioContext.resume();
+                audioContext.resume().then(() => {
+                    console.log('AudioContext恢复成功，状态:', audioContext.state);
+                }).catch(error => {
+                    console.error('AudioContext恢复失败:', error);
+                });
+            } else {
+                console.log('AudioContext已激活，状态:', audioContext.state);
             }
+        }
+        
+        // 预加载音频文件
+        function preloadAudio() {
+            console.log('开始预加载音频...');
+            const victoryMusic = document.getElementById('victory-music');
+            victoryMusic.load();
+            victoryMusic.addEventListener('loadeddata', () => {
+                console.log('音频预加载完成');
+            });
+            victoryMusic.addEventListener('error', (error) => {
+                console.error('音频预加载失败:', error);
+            });
         }
         
         // 生成欢呼声和掌声音效
@@ -2287,6 +2321,8 @@
         window.addEventListener('load', function() {
             detectDeviceAndAdjustOrientation();
             initSelectedPlanesToggle();
+            // 页面加载完成后预加载音频
+            preloadAudio();
         });
         
         // 初始化游戏，默认10架战机
