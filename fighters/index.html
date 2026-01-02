@@ -287,8 +287,9 @@
             }
             
             .game-container {
-                padding: 15px;
+                padding: 15px 15px 200px; /* 底部添加足够空间容纳已选战机区域 */
                 margin: 0 5px;
+                box-sizing: border-box;
             }
             
             .game-info {
@@ -327,13 +328,24 @@
                 justify-content: center;
             }
             
+            /* 已选战机区域优化 */
+            .selected-planes {
+                max-height: 180px;
+                padding: 10px;
+            }
+            
             .selected-planes-container {
                 flex-direction: column;
-                gap: 15px;
+                gap: 10px;
             }
             
             .player-selected {
                 width: 100%;
+                padding: 10px;
+            }
+            
+            .selected-plane-list {
+                max-height: 80px;
             }
             
             .selected-plane-item {
@@ -365,7 +377,7 @@
             }
             
             .game-container {
-                padding: 10px;
+                padding: 10px 10px 200px; /* 底部添加足够空间容纳已选战机区域 */
             }
             
             .player-info {
@@ -392,10 +404,6 @@
                 font-size: 0.9rem;
             }
             
-            .selected-planes {
-                padding: 10px;
-            }
-            
             .plane-card {
                 width: 70px;
                 height: 70px;
@@ -407,6 +415,129 @@
             
             .game-board {
                 min-height: 400px;
+            }
+        }
+        
+        /* 针对iPhone竖屏优化 */
+        @media screen and (max-device-width: 430px) and (orientation: portrait) {
+            /* 优化已选战机区域 */
+            .selected-planes {
+                padding: 8px;
+                max-height: 150px;
+            }
+            
+            .selected-planes-container {
+                gap: 8px;
+            }
+            
+            .selected-plane-list {
+                max-height: 60px;
+            }
+            
+            .selected-plane-item {
+                min-width: 60px;
+                padding: 6px;
+            }
+            
+            /* 优化对决模态框 */
+            .battle-content {
+                padding: 20px 10px;
+                width: 95%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            .battle-title {
+                font-size: 1.8rem;
+            }
+            
+            .battle-planes {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .battle-plane {
+                min-width: auto;
+                width: 100%;
+                padding: 15px;
+            }
+            
+            .battle-plane-emoji {
+                font-size: 3rem;
+            }
+            
+            .versus-text {
+                font-size: 2rem;
+            }
+            
+            /* 确保结果模态框适配 */
+            .result-content {
+                padding: 20px 10px;
+                width: 95%;
+                max-width: 100%;
+            }
+        }
+        
+        /* 针对iPhone横屏优化 */
+        @media screen and (max-device-width: 900px) and (orientation: landscape) {
+            /* 优化游戏容器 */
+            .game-container {
+                padding: 10px 10px 150px;
+            }
+            
+            /* 优化对决模态框 */
+            .battle-modal {
+                display: flex;
+                align-items: center;
+            }
+            
+            .battle-content {
+                padding: 20px;
+                width: 95%;
+                max-width: 95%;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            .battle-planes {
+                gap: 15px;
+            }
+            
+            .battle-plane {
+                min-width: 180px;
+                padding: 15px;
+            }
+            
+            .battle-plane-emoji {
+                font-size: 3.5rem;
+            }
+            
+            /* 确保继续按钮可见 */
+            .continue-btn {
+                margin-top: 15px;
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+            
+            /* 优化游戏板 */
+            .game-board {
+                min-height: 300px;
+            }
+            
+            .plane-card {
+                width: 70px;
+                height: 70px;
+            }
+        }
+        
+        /* 针对iOS设备的安全区域优化 */
+        @supports (padding: max(0px)) {
+            .selected-planes {
+                padding-bottom: max(15px, env(safe-area-inset-bottom));
+            }
+            
+            .game-container {
+                padding-bottom: max(200px, env(safe-area-inset-bottom) + 180px);
             }
         }
         
