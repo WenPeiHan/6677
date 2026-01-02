@@ -1060,6 +1060,9 @@
         function confirmAvatarSelection() {
             if (!selectedAvatar) return;
             
+            // 激活AudioContext（针对iOS设备，在用户首次交互时激活）
+            activateAudioContext();
+            
             // 保存选择的头像
             if (gameState.currentAvatarSelector === 1) {
                 gameState.player1Avatar = selectedAvatar;
@@ -1140,19 +1143,7 @@
             renderBalloons();
         });
         
-        // 初始化AudioContext - 用于处理音效
-        let audioContext = null;
-        
-        // 激活AudioContext - 处理浏览器自动播放政策
-        function activateAudioContext() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            // 恢复AudioContext（如果被挂起）
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-        }
+
         
         // 显示寻宝详情
         function showRecords() {
@@ -1323,11 +1314,6 @@
         const randomBackground = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
         const forestBackground = document.querySelector('.forest-background');
         forestBackground.style.backgroundImage = `url('${randomBackground}')`;
-        
-        // 针对iOS设备的关键：添加全局事件监听器来激活AudioContext
-        // iOS设备需要用户交互才能激活AudioContext
-        document.addEventListener('click', activateAudioContext, { once: true });
-        document.addEventListener('touchstart', activateAudioContext, { once: true });
         
         // 初始化游戏，显示头像选择
         showAvatarSelection();
