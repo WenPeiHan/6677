@@ -190,18 +190,86 @@
             left: 0;
             right: 0;
             background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
+            padding: 0;
             border-radius: 15px 15px 0 0;
             z-index: 100;
-            max-height: 200px;
             overflow: hidden;
+            transition: max-height 0.3s ease;
         }
         
-        .selected-planes h3 {
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
+        /* 已选战机横幅样式 */
+        .selected-planes-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
+        
+        .selected-planes-banner:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .selected-planes-banner h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        
+        /* 切换图标样式 */
+        .toggle-icon {
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+        
+        /* 已选战机内容样式 */
+        .selected-planes-content {
+            padding: 0 15px 15px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        /* 移动端默认隐藏已选战机内容 */
+        @media screen and (max-device-width: 768px) {
+            .selected-planes {
+                max-height: 60px; /* 仅显示横幅高度 */
+            }
+            
+            .selected-planes-content {
+                display: none;
+            }
+            
+            /* 展开状态 */
+            .selected-planes.expanded {
+                max-height: 200px;
+            }
+            
+            .selected-planes.expanded .selected-planes-content {
+                display: block;
+            }
+            
+            .selected-planes.expanded .toggle-icon {
+                transform: rotate(180deg);
+            }
+        }
+        
+        /* 非移动端显示完整内容 */
+        @media screen and (min-device-width: 769px) {
+            .selected-planes-banner {
+                display: none; /* 非移动端隐藏横幅 */
+            }
+            
+            .selected-planes-content {
+                display: block;
+                padding: 15px;
+            }
+            
+            .selected-planes {
+                max-height: 200px;
+            }
+        }
+        
+
         
         .selected-planes-container {
             display: flex;
@@ -1025,15 +1093,22 @@
         
         <!-- 已选战机展示区域 -->
         <div class="selected-planes">
-            <h3>已选战机</h3>
-            <div class="selected-planes-container">
-                <div class="player-selected player1-selected">
-                    <div class="player-label">66小朋友已选</div>
-                    <div class="selected-plane-list" id="player1-selected-list"></div>
-                </div>
-                <div class="player-selected player2-selected">
-                    <div class="player-label">77小朋友已选</div>
-                    <div class="selected-plane-list" id="player2-selected-list"></div>
+            <!-- 已选战机横幅（移动端显示） -->
+            <div class="selected-planes-banner" id="selected-planes-banner">
+                <h3>已选战机</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <!-- 已选战机内容 -->
+            <div class="selected-planes-content" id="selected-planes-content">
+                <div class="selected-planes-container">
+                    <div class="player-selected player1-selected">
+                        <div class="player-label">66小朋友已选</div>
+                        <div class="selected-plane-list" id="player1-selected-list"></div>
+                    </div>
+                    <div class="player-selected player2-selected">
+                        <div class="player-label">77小朋友已选</div>
+                        <div class="selected-plane-list" id="player2-selected-list"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1997,8 +2072,34 @@
             }
         }
         
-        // 在页面加载完成后检测设备
-        window.addEventListener('load', detectDeviceAndAdjustOrientation);
+        // 已选战机区域切换功能
+        function initSelectedPlanesToggle() {
+            const selectedPlanes = document.querySelector('.selected-planes');
+            const banner = document.getElementById('selected-planes-banner');
+            const content = document.getElementById('selected-planes-content');
+            
+            // 点击横幅切换显示/隐藏
+            banner.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                selectedPlanes.classList.toggle('expanded');
+            });
+            
+            // 点击内容区域内部不关闭
+            content.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+            });
+            
+            // 点击屏幕其他区域关闭
+            document.addEventListener('click', function() {
+                selectedPlanes.classList.remove('expanded');
+            });
+        }
+        
+        // 在页面加载完成后检测设备并初始化功能
+        window.addEventListener('load', function() {
+            detectDeviceAndAdjustOrientation();
+            initSelectedPlanesToggle();
+        });
         
         // 初始化游戏，默认10架战机
         document.querySelector('.size-option[data-planes="10"]').classList.add('active');
