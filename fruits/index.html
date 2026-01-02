@@ -954,6 +954,7 @@
         
         // 初始化AudioContext - 用于处理音效
         let audioContext = null;
+        let audioInitialized = false;
         
         // 激活AudioContext - 处理浏览器自动播放政策
         function activateAudioContext() {
@@ -962,9 +963,26 @@
             }
             // 恢复AudioContext（如果被挂起）
             if (audioContext.state === 'suspended') {
-                audioContext.resume();
+                audioContext.resume().then(() => {
+                    console.log('AudioContext已恢复');
+                }).catch(error => {
+                    console.log('恢复AudioContext失败:', error);
+                });
+            }
+            audioInitialized = true;
+        }
+        
+        // 确保音频上下文在用户交互时激活
+        function ensureAudioInitialized() {
+            if (!audioInitialized) {
+                activateAudioContext();
             }
         }
+        
+        // 添加全局点击事件，确保音频上下文在用户第一次交互时激活
+        document.addEventListener('click', ensureAudioInitialized, { once: true });
+        document.addEventListener('touchstart', ensureAudioInitialized, { once: true });
+        document.addEventListener('keydown', ensureAudioInitialized, { once: true });
         
         // 结束游戏
         function endGame() {
@@ -994,47 +1012,102 @@
             activateAudioContext();
             
             // 播放胜利音乐 - 修复平板和手机上的音频播放问题
+            playVictoryMusic();
+        }
+        
+        // 播放胜利音乐的独立函数
+        function playVictoryMusic() {
             try {
                 console.log('尝试播放胜利音乐');
                 
-                // 方法1：直接使用HTML中的audio元素
+                // 方法1：直接使用HTML中的audio元素（最优先）
                 const victoryAudio = document.getElementById('victory-music');
                 if (victoryAudio) {
+                    console.log('使用HTML audio元素播放');
                     victoryAudio.currentTime = 0;
-                    victoryAudio.play().then(() => {
-                        console.log('胜利音乐播放成功（HTML元素）');
-                    }).catch(error => {
-                        console.log('胜利音乐播放失败（HTML元素）:', error);
-                        
-                        // 方法2：使用Audio对象
-                        const victoryMusic = new Audio('victory.mp3');
-                        victoryMusic.play().then(() => {
-                            console.log('胜利音乐播放成功（Audio对象）');
-                        }).catch(backupError => {
-                            console.log('胜利音乐播放失败（Audio对象）:', backupError);
-                            
-                            // 方法3：使用AudioContext直接播放
-                            if (audioContext) {
-                                console.log('尝试使用AudioContext播放胜利音乐');
-                                fetch('victory.mp3')
-                                    .then(response => response.arrayBuffer())
-                                    .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-                                    .then(audioBuffer => {
-                                        const source = audioContext.createBufferSource();
-                                        source.buffer = audioBuffer;
-                                        source.connect(audioContext.destination);
-                                        source.start();
-                                        console.log('胜利音乐播放成功（AudioContext）');
-                                    })
-                                    .catch(contextError => {
-                                        console.log('胜利音乐播放失败（AudioContext）:', contextError);
-                                    });
-                            }
+                    victoryAudio.volume = 0.5;
+                    
+                    // 在移动设备上，确保音频元素已经加载完成
+                    if (victoryAudio.readyState >= 2) {
+                        victoryAudio.play().then(() => {
+                            console.log('胜利音乐播放成功（HTML元素）');
+                        }).catch(error => {
+                            console.log('胜利音乐播放失败（HTML元素）:', error);
+                            tryMethod2();
                         });
-                    });
+                    } else {
+                        // 如果音频未加载完成，监听canplaythrough事件
+                        victoryAudio.addEventListener('canplaythrough', () => {
+                            victoryAudio.play().then(() => {
+                                console.log('胜利音乐播放成功（HTML元素，延迟）');
+                            }).catch(error => {
+                                console.log('胜利音乐播放失败（HTML元素，延迟）:', error);
+                                tryMethod2();
+                            });
+                        }, { once: true });
+                    }
+                } else {
+                    tryMethod2();
                 }
             } catch (error) {
-                console.log('无法播放胜利音乐:', error);
+                console.log('播放胜利音乐时出错:', error);
+                tryMethod2();
+            }
+            
+            function tryMethod2() {
+                // 方法2：使用Audio对象
+                try {
+                    console.log('使用Audio对象播放');
+                    const victoryMusic = new Audio('victory.mp3');
+                    victoryMusic.volume = 0.5;
+                    victoryMusic.play().then(() => {
+                        console.log('胜利音乐播放成功（Audio对象）');
+                    }).catch(backupError => {
+                        console.log('胜利音乐播放失败（Audio对象）:', backupError);
+                        tryMethod3();
+                    });
+                } catch (error) {
+                    console.log('Audio对象播放失败:', error);
+                    tryMethod3();
+                }
+            }
+            
+            function tryMethod3() {
+                // 方法3：使用AudioContext直接播放
+                try {
+                    if (audioContext) {
+                        console.log('尝试使用AudioContext播放胜利音乐');
+                        fetch('victory.mp3')
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP错误！状态: ${response.status}`);
+                                }
+                                return response.arrayBuffer();
+                            })
+                            .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                            .then(audioBuffer => {
+                                const source = audioContext.createBufferSource();
+                                source.buffer = audioBuffer;
+                                
+                                // 添加音量控制
+                                const gainNode = audioContext.createGain();
+                                gainNode.gain.value = 0.5;
+                                
+                                source.connect(gainNode);
+                                gainNode.connect(audioContext.destination);
+                                source.start();
+                                console.log('胜利音乐播放成功（AudioContext）');
+                            })
+                            .catch(contextError => {
+                                console.log('胜利音乐播放失败（AudioContext）:', contextError);
+                                console.log('所有音频播放方法均失败');
+                            });
+                    } else {
+                        console.log('AudioContext未初始化');
+                    }
+                } catch (error) {
+                    console.log('AudioContext播放失败:', error);
+                }
             }
         }
         
