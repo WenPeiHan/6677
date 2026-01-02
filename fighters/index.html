@@ -1049,6 +1049,114 @@
             width: 90%;
         }
         
+        /* 战况详情模态框样式 */
+        .battle-records-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .battle-records-content {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 800px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        /* 战况详情列表样式 */
+        .battle-records-list {
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        /* 每轮战况样式 */
+        .round-record {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+        }
+        
+        /* 轮次标题 */
+        .round-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #ffd93d;
+        }
+        
+        /* 玩家选择样式 */
+        .player-selections {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        /* 单个玩家选择样式 */
+        .player-selection {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+        }
+        
+        /* 玩家名称 */
+        .player-selection .player-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        /* 战机信息 */
+        .plane-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        /* 战机表情 */
+        .plane-info .plane-emoji {
+            font-size: 2rem;
+        }
+        
+        /* 战机详情 */
+        .plane-details {
+            text-align: left;
+        }
+        
+        /* 按钮容器 */
+        .battle-records-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .player-selections {
+                flex-direction: column;
+            }
+            
+            .battle-records-buttons {
+                flex-direction: column;
+            }
+        }
+        
         .hide {
             display: none;
         }
@@ -1172,18 +1280,30 @@
     </div>
     
     <!-- 结果模态框 -->
-    <div class="result-modal hide" id="result-modal">
-        <div class="result-content">
-            <!-- 获胜者头像容器 -->
-            <div class="winner-avatars">
-                <div id="player1-result-avatar" class="result-avatar"></div>
-                <div id="player2-result-avatar" class="result-avatar"></div>
+        <div class="result-modal hide" id="result-modal">
+            <div class="result-content">
+                <!-- 获胜者头像容器 -->
+                <div class="winner-avatars">
+                    <div id="player1-result-avatar" class="result-avatar"></div>
+                    <div id="player2-result-avatar" class="result-avatar"></div>
+                </div>
+                <h2 id="result-title">游戏结束</h2>
+                <p id="result-text"></p>
+                <button class="continue-btn" id="view-battle-records">查看战况</button>
             </div>
-            <h2 id="result-title">游戏结束</h2>
-            <p id="result-text"></p>
-            <button class="continue-btn" id="play-again">再来一局</button>
         </div>
-    </div>
+        
+        <!-- 战况详情模态框 -->
+        <div class="battle-records-modal hide" id="battle-records-modal">
+            <div class="battle-records-content">
+                <h2>战况详情</h2>
+                <div class="battle-records-list" id="battle-records-list"></div>
+                <div class="battle-records-buttons">
+                    <button class="continue-btn" id="play-again-from-records">再来一局</button>
+                    <button class="continue-btn" id="end-game">结束游戏</button>
+                </div>
+            </div>
+        </div>
     
     <script>
 
@@ -1410,6 +1530,7 @@
                 // 更新游戏状态文本
                 const playerName = gameState.currentPlayer === 1 ? '66小朋友' : '77小朋友';
                 document.getElementById('game-status').textContent = `${playerName}，请选择你的战机`;
+                console.log('玩家切换成功，当前玩家:', gameState.currentPlayer, '显示文本:', document.getElementById('game-status').textContent);
             } else {
                 // 两个玩家都已选择，显示对决画面
                 setTimeout(() => {
@@ -1607,10 +1728,13 @@
             
             // 先将选中的战机添加到玩家的已选战机列表中
             if (currentSelections.length === 2) {
-                const [player1, player2] = currentSelections;
+                // 正确识别玩家1和玩家2的选择，不依赖选择顺序
+                const player1Selection = currentSelections.find(selection => selection.playerId === 1);
+                const player2Selection = currentSelections.find(selection => selection.playerId === 2);
+                
                 // 创建战机对象的深拷贝，确保已选战机列表中的对象不受影响
-                const player1Plane = JSON.parse(JSON.stringify(player1.plane));
-                const player2Plane = JSON.parse(JSON.stringify(player2.plane));
+                const player1Plane = JSON.parse(JSON.stringify(player1Selection.plane));
+                const player2Plane = JSON.parse(JSON.stringify(player2Selection.plane));
                 // 添加到已选战机列表
                 gameState.player1SelectedPlanes.push(player1Plane);
                 gameState.player2SelectedPlanes.push(player2Plane);
@@ -1704,60 +1828,36 @@
             text.textContent = `66小朋友: ${gameState.player1Score} 胜 | 77小朋友: ${gameState.player2Score} 胜 | 总轮次: ${gameState.roundCount}`;
             modal.classList.remove('hide');
             
-            // 播放胜利音乐 - 增强版，支持GitHub Pages
+            // 播放胜利音乐
             playVictorySound();
             
-            // 播放胜利音乐函数 - 优化版带详细调试
+            // 播放胜利音乐函数
             function playVictorySound() {
                 console.log('开始播放胜利音乐...');
                 
-                // 确保AudioContext已初始化
-                if (!audioContext) {
-                    console.log('创建新的AudioContext');
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                
-                activateAudioContext();
-                console.log('AudioContext状态:', audioContext.state);
-                
-                // 检查audio元素是否存在
+                // 先尝试使用HTML5 Audio，更简单可靠
                 const victoryMusic = document.getElementById('victory-music');
                 console.log('音频元素:', victoryMusic);
                 
-                // 直接使用Web Audio API，更可靠
-                try {
-                    // 创建XHR请求加载本地音频文件
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('GET', 'victory.mp3', true);
-                    xhr.responseType = 'arraybuffer';
-                    
-                    xhr.onload = function() {
-                        console.log('音频文件加载成功，开始解码...');
-                        audioContext.decodeAudioData(xhr.response, function(buffer) {
-                            console.log('音频解码成功，准备播放...');
-                            const source = audioContext.createBufferSource();
-                            source.buffer = buffer;
-                            source.connect(audioContext.destination);
-                            source.start(0);
-                            console.log('胜利音乐播放成功！');
-                        }, function(webError) {
-                            console.error('Web Audio API解码失败:', webError);
+                if (victoryMusic) {
+                    // 重置音频并播放
+                    victoryMusic.currentTime = 0;
+                    victoryMusic.play().then(() => {
+                        console.log('胜利音乐播放成功！');
+                    }).catch(error => {
+                        console.log('HTML5 Audio播放失败，尝试激活AudioContext并重新播放:', error);
+                        
+                        // 尝试激活AudioContext
+                        activateAudioContext();
+                        
+                        // 再次尝试播放
+                        victoryMusic.currentTime = 0;
+                        victoryMusic.play().catch(secondError => {
+                            console.error('第二次播放尝试失败:', secondError);
                         });
-                    };
-                    
-                    xhr.onerror = function(networkError) {
-                        console.error('无法加载音频文件，检查文件路径和存在性:', networkError);
-                    };
-                    
-                    xhr.onprogress = function(event) {
-                        if (event.lengthComputable) {
-                            console.log(`音频文件加载进度: ${Math.round(event.loaded / event.total * 100)}%`);
-                        }
-                    };
-                    
-                    xhr.send();
-                } catch (webAudioError) {
-                    console.error('Web Audio API初始化失败:', webAudioError);
+                    });
+                } else {
+                    console.error('音频元素未找到');
                 }
             }
         }
@@ -1797,15 +1897,17 @@
             // 更新界面
             document.getElementById('player1-score').textContent = '0';
             document.getElementById('player2-score').textContent = '0';
-            document.getElementById('round-count').textContent = '0';
+            document.getElementById('round-count').textContent = gameState.roundCount;
             
             // 更新游戏状态文本
             const playerName = firstPlayer === 1 ? '66小朋友' : '77小朋友';
             document.getElementById('game-status').textContent = `${playerName}，请选择你的战机`;
+            console.log('新游戏初始化，当前玩家:', gameState.currentPlayer, '显示文本:', document.getElementById('game-status').textContent);
             
             // 隐藏模态框
             document.getElementById('result-modal').classList.add('hide');
             document.getElementById('battle-modal').classList.add('hide');
+            document.getElementById('battle-records-modal').classList.add('hide');
             
             // 清空已选战机展示
             document.getElementById('player1-selected-list').innerHTML = '';
@@ -2023,8 +2125,104 @@
             continueGame();
         });
         
+        // 查看战况
+        document.getElementById('view-battle-records').addEventListener('click', () => {
+            activateAudioContext();
+            showBattleRecords();
+        });
+        
+        // 显示战况详情
+        function showBattleRecords() {
+            const recordsModal = document.getElementById('battle-records-modal');
+            const recordsList = document.getElementById('battle-records-list');
+            
+            // 清空现有内容
+            recordsList.innerHTML = '';
+            
+            // 获取玩家已选战机列表
+            const player1Planes = gameState.player1SelectedPlanes;
+            const player2Planes = gameState.player2SelectedPlanes;
+            
+            // 生成每轮战况
+            for (let round = 0; round < player1Planes.length; round++) {
+                const roundRecord = document.createElement('div');
+                roundRecord.className = 'round-record';
+                
+                // 轮次标题
+                const roundTitle = document.createElement('div');
+                roundTitle.className = 'round-title';
+                roundTitle.textContent = `第${round + 1}轮`;
+                roundRecord.appendChild(roundTitle);
+                
+                // 玩家选择区域
+                const selections = document.createElement('div');
+                selections.className = 'player-selections';
+                
+                // 比较血量，确定本轮胜者
+                const player1Health = player1Planes[round].health;
+                const player2Health = player2Planes[round].health;
+                const winner = player1Health > player2Health ? 1 : player2Health > player1Health ? 2 : 0;
+                
+                // 玩家1选择
+                const player1Selection = document.createElement('div');
+                player1Selection.className = 'player-selection';
+                player1Selection.innerHTML = `
+                    <div class="player-name" style="color: #ff6b6b;">
+                        ${winner === 1 ? '🏆 ' : ''}66小朋友
+                    </div>
+                    <div class="plane-info">
+                        <div class="plane-emoji">${player1Planes[round].emoji}</div>
+                        <div class="plane-details">
+                            <div>${player1Planes[round].name}</div>
+                            <div>血量: ${player1Planes[round].health}</div>
+                            <div>等级: Lv.${player1Planes[round].level}</div>
+                        </div>
+                    </div>
+                `;
+                selections.appendChild(player1Selection);
+                
+                // 玩家2选择
+                const player2Selection = document.createElement('div');
+                player2Selection.className = 'player-selection';
+                player2Selection.innerHTML = `
+                    <div class="player-name" style="color: #4ecdc4;">
+                        ${winner === 2 ? '🏆 ' : ''}77小朋友
+                    </div>
+                    <div class="plane-info">
+                        <div class="plane-emoji">${player2Planes[round].emoji}</div>
+                        <div class="plane-details">
+                            <div>${player2Planes[round].name}</div>
+                            <div>血量: ${player2Planes[round].health}</div>
+                            <div>等级: Lv.${player2Planes[round].level}</div>
+                        </div>
+                    </div>
+                `;
+                selections.appendChild(player2Selection);
+                
+                roundRecord.appendChild(selections);
+                recordsList.appendChild(roundRecord);
+            }
+            
+            // 显示战况模态框
+            recordsModal.classList.remove('hide');
+        }
+        
+        // 关闭战况详情并结束游戏
+        document.getElementById('end-game').addEventListener('click', () => {
+            // 关闭当前网页
+            window.close();
+        });
+        
+        // 从战况详情重新开始游戏
+        document.getElementById('play-again-from-records').addEventListener('click', () => {
+            activateAudioContext();
+            const recordsModal = document.getElementById('battle-records-modal');
+            recordsModal.classList.add('hide');
+            newGame(gameState.totalPlanes); // 使用当前游戏的战机总数开始新游戏
+        });
+        
         // 重新开始游戏
-        document.getElementById('play-again').addEventListener('click', () => {
+        document.getElementById('play-again')?.addEventListener('click', () => {
             activateAudioContext();
             newGame(gameState.totalPlanes); // 使用当前游戏的战机总数开始新游戏
         });
