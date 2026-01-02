@@ -541,6 +541,66 @@
             }
         }
         
+        /* 手机横屏提示样式 */
+        .orientation-hint {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            transition: opacity 0.3s ease;
+        }
+        
+        .orientation-content {
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+        
+        .orientation-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: rotate 3s ease-in-out infinite;
+        }
+        
+        .orientation-text {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .orientation-subtext {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        /* 旋转动画 */
+        @keyframes rotate {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+        }
+        
+        /* 在横屏模式下隐藏提示 */
+        @media screen and (orientation: landscape) {
+            .orientation-hint {
+                display: none;
+            }
+        }
+        
+        /* 非手机设备隐藏提示 */
+        @media screen and (min-device-width: 768px) {
+            .orientation-hint {
+                display: none;
+            }
+        }
+        
         /* 游戏板样式 */
         .game-board {
             position: relative;
@@ -986,6 +1046,15 @@
             <source src="victory.mp3" type="audio/mpeg">
             <!-- 支持多种音频格式以提高浏览器兼容性 -->
         </audio>
+        
+        <!-- 手机横屏提示 -->
+        <div id="orientation-hint" class="orientation-hint">
+            <div class="orientation-content">
+                <div class="orientation-icon">📱</div>
+                <div class="orientation-text">为获得最佳体验，请将手机横屏使用</div>
+                <div class="orientation-subtext">Rotate your device to landscape mode for the best experience</div>
+            </div>
+        </div>
 
     </div>
     
@@ -1902,6 +1971,34 @@
         // 添加全局点击事件，确保AudioContext在用户首次交互时被激活
         document.addEventListener('click', activateAudioContext, { once: true });
         document.addEventListener('keydown', activateAudioContext, { once: true });
+        
+        // 检测设备类型并自动调整屏幕方向
+        function detectDeviceAndAdjustOrientation() {
+            // 检测是否为手机设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                console.log('检测到手机设备，尝试切换到横屏模式...');
+                
+                // 尝试使用Screen Orientation API请求横屏模式
+                if (screen.orientation && screen.orientation.lock) {
+                    try {
+                        screen.orientation.lock('landscape').then(function() {
+                            console.log('横屏模式切换成功');
+                        }).catch(function(error) {
+                            console.log('无法锁定横屏模式（用户可能拒绝了请求）:', error);
+                        });
+                    } catch (e) {
+                        console.log('横屏模式锁定失败:', e);
+                    }
+                } else {
+                    console.log('当前浏览器不支持Screen Orientation API');
+                }
+            }
+        }
+        
+        // 在页面加载完成后检测设备
+        window.addEventListener('load', detectDeviceAndAdjustOrientation);
         
         // 初始化游戏，默认10架战机
         document.querySelector('.size-option[data-planes="10"]').classList.add('active');
