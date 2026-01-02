@@ -249,50 +249,66 @@
             }
         }
         
-        /* 横屏提示样式 */
+        /* 手机横屏提示样式 */
         .orientation-warning {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: none;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
             justify-content: center;
             align-items: center;
             z-index: 2000;
-            flex-direction: column;
-            text-align: center;
+            transition: opacity 0.3s ease;
         }
         
-        .orientation-warning.show {
-            display: flex;
+        .orientation-content {
+            text-align: center;
+            color: white;
+            padding: 20px;
         }
         
         .orientation-icon {
             font-size: 5rem;
             margin-bottom: 20px;
-            animation: rotateDevice 2s ease-in-out infinite;
-        }
-        
-        @keyframes rotateDevice {
-            0%, 100% {
-                transform: rotate(0deg);
-            }
-            50% {
-                transform: rotate(90deg);
-            }
+            animation: rotate 3s ease-in-out infinite;
         }
         
         .orientation-text {
             font-size: 1.5rem;
             margin-bottom: 10px;
+            font-weight: bold;
             color: #fff;
         }
         
         .orientation-subtext {
             font-size: 1rem;
             color: #ccc;
+            opacity: 0.8;
+        }
+        
+        /* 旋转动画 */
+        @keyframes rotate {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+        }
+        
+        /* 在横屏模式下隐藏提示 */
+        @media screen and (orientation: landscape) {
+            .orientation-warning {
+                display: none;
+            }
+        }
+        
+        /* 非手机设备隐藏提示 */
+        @media screen and (min-device-width: 768px) {
+            .orientation-warning {
+                display: none;
+            }
         }
         
         /* 模态框样式 */
@@ -562,9 +578,11 @@
     
     <!-- 横屏提示 -->
     <div class="orientation-warning" id="orientation-warning">
-        <div class="orientation-icon">📱</div>
-        <div class="orientation-text">请横屏使用游戏</div>
-        <div class="orientation-subtext">将设备旋转至横向以获得最佳游戏体验</div>
+        <div class="orientation-content">
+            <div class="orientation-icon">📱</div>
+            <div class="orientation-text">为获得最佳体验，请将手机横屏使用</div>
+            <div class="orientation-subtext">Rotate your device to landscape mode for the best experience</div>
+        </div>
     </div>
     
     <script>
@@ -874,31 +892,11 @@
             text.textContent = `小猴子1号: ${gameState.player1Score} 金币 | 小猴子2号: ${gameState.player2Score} 金币`;
             modal.classList.remove('hide');
             
-            // 播放胜利音乐 - 增强版本，确保在GitHub部署后能正常播放
+            // 播放胜利音乐 - 参照Fighters游戏的实现
             try {
-                // 确保AudioContext已激活
-                activateAudioContext();
-                
-                // 获取音频元素
-                const victoryMusic = document.getElementById('victory-music');
-                
-                // 重置音频位置
-                victoryMusic.currentTime = 0;
-                
-                // 直接播放音频，不依赖AudioContext
-                victoryMusic.play().then(() => {
-                    console.log('胜利音乐播放成功');
-                }).catch(error => {
+                const victoryMusic = new Audio('victory.mp3');
+                victoryMusic.play().catch(error => {
                     console.log('胜利音乐播放失败:', error);
-                    
-                    // 尝试备选方案：重新加载音频资源
-                    victoryMusic.src = 'victory.mp3';
-                    victoryMusic.load();
-                    victoryMusic.play().then(() => {
-                        console.log('备选方案：胜利音乐播放成功');
-                    }).catch(backupError => {
-                        console.log('备选方案：胜利音乐播放失败:', backupError);
-                    });
                 });
             } catch (error) {
                 console.log('无法播放胜利音乐:', error);
@@ -1263,25 +1261,7 @@
         document.addEventListener('click', activateAudioContext, { once: true });
         document.addEventListener('keydown', activateAudioContext, { once: true });
         
-        // 横屏检测和提示
-        function checkOrientation() {
-            const isMobile = window.innerWidth < 768;
-            const isPortrait = window.innerWidth < window.innerHeight;
-            const warning = document.getElementById('orientation-warning');
-            
-            if (isMobile && isPortrait) {
-                warning.classList.add('show');
-            } else {
-                warning.classList.remove('show');
-            }
-        }
-        
-        // 初始化横屏检测
-        checkOrientation();
-        
-        // 监听屏幕旋转和尺寸变化
-        window.addEventListener('resize', checkOrientation);
-        window.addEventListener('orientationchange', checkOrientation);
+        // 移除横屏检测的JavaScript实现，改用纯CSS媒体查询
         
         // 初始化背景图
         const backgroundImages = ['forest1.jpg', 'forest2.jpg'];
