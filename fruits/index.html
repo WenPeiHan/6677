@@ -876,6 +876,12 @@
         
         // 新游戏
         function newGame() {
+            // 随机选择背景图
+            const backgroundImages = ['forest1.jpg', 'forest2.jpg'];
+            const randomBackground = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
+            const forestBackground = document.querySelector('.forest-background');
+            forestBackground.style.backgroundImage = `url('${randomBackground}')`;
+            
             // 重置游戏状态
             gameState = {
                 balloons: [],
@@ -977,6 +983,12 @@
             
             // 获取游戏总轮数
             const totalRounds = parseInt(this.dataset.rounds);
+            
+            // 随机选择背景图
+            const backgroundImages = ['forest1.jpg', 'forest2.jpg'];
+            const randomBackground = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
+            const forestBackground = document.querySelector('.forest-background');
+            forestBackground.style.backgroundImage = `url('${randomBackground}')`;
             
             // 保存当前头像选择
             const player1Avatar = gameState.player1Avatar;
@@ -1179,6 +1191,12 @@
         // 添加全局点击事件，确保AudioContext被激活
         document.addEventListener('click', activateAudioContext, { once: true });
         document.addEventListener('keydown', activateAudioContext, { once: true });
+        
+        // 初始化背景图
+        const backgroundImages = ['forest1.jpg', 'forest2.jpg'];
+        const randomBackground = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
+        const forestBackground = document.querySelector('.forest-background');
+        forestBackground.style.backgroundImage = `url('${randomBackground}')`;
         
         // 初始化游戏，显示头像选择
         showAvatarSelection();
