@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>飞机大作战</title>
+    <title>战机大比拼</title>
     <style>
         * {
             margin: 0;
@@ -853,6 +853,7 @@
         <!-- 音频元素 -->
         <audio id="victory-music" preload="auto">
             <source src="victory.mp3" type="audio/mpeg">
+            <!-- 支持多种音频格式以提高浏览器兼容性 -->
         </audio>
 
     </div>
@@ -1428,13 +1429,51 @@
             text.textContent = `66小朋友: ${gameState.player1Score} 胜 | 77小朋友: ${gameState.player2Score} 胜 | 总轮次: ${gameState.roundCount}`;
             modal.classList.remove('hide');
             
-            // 播放胜利音乐
-            const victoryMusic = document.getElementById('victory-music');
-            // 重置音频并播放
-            victoryMusic.currentTime = 0;
-            victoryMusic.play().catch(error => {
-                console.log('无法播放胜利音乐:', error);
-            });
+            // 播放胜利音乐 - 增强版，支持GitHub Pages
+            playVictorySound();
+            
+            // 播放胜利音乐函数
+            function playVictorySound() {
+                try {
+                    activateAudioContext();
+                    
+                    // 首先尝试HTML5 Audio
+                    const victoryMusic = document.getElementById('victory-music');
+                    victoryMusic.currentTime = 0;
+                    victoryMusic.play().catch(htmlError => {
+                        console.log('HTML5 Audio播放失败，尝试Web Audio API:', htmlError);
+                        
+                        // 尝试Web Audio API作为备用
+                        try {
+                            // 创建XHR请求加载本地音频文件
+                            const xhr = new XMLHttpRequest();
+                            xhr.open('GET', 'victory.mp3', true);
+                            xhr.responseType = 'arraybuffer';
+                            
+                            xhr.onload = function() {
+                                audioContext.decodeAudioData(xhr.response, function(buffer) {
+                                    const source = audioContext.createBufferSource();
+                                    source.buffer = buffer;
+                                    source.connect(audioContext.destination);
+                                    source.start(0);
+                                }, function(webError) {
+                                    console.log('Web Audio API解码失败:', webError);
+                                });
+                            };
+                            
+                            xhr.onerror = function(networkError) {
+                                console.log('无法加载音频文件:', networkError);
+                            };
+                            
+                            xhr.send();
+                        } catch (webAudioError) {
+                            console.log('Web Audio API初始化失败:', webAudioError);
+                        }
+                    });
+                } catch (error) {
+                    console.log('播放胜利音乐时发生错误:', error);
+                }
+            }
         }
         
         // 新游戏
